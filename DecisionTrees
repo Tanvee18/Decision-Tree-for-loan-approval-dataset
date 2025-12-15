@@ -1,0 +1,62 @@
+import kagglehub 
+# Download latest version 
+path = kagglehub.dataset_download("parthpatel2130/realistic-loan-approval-dataset-us-and-canada") 
+print("Path to dataset files:", path) 
+
+import os
+print(os.listdir(path)) 
+
+import pandas as pd 
+csv_file = os.path.join(path, "Loan_approval_data_2025.csv") 
+df = pd.read_csv(csv_file) 
+
+df.head() 
+df = df.drop(columns=['customer_id']) 
+
+y = df['loan_status'] 
+X = df.drop('loan_status', axis=1) 
+
+X = pd.get_dummies(X,drop_first=True) 
+X = X.fillna(0)
+
+from sklearn.model_selection import train_test_split 
+
+X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=0.2,random_state=42,stratify=y) 
+
+print(X_train.shape) 
+print(X_train.dtypes) 
+
+from sklearn.tree import DecisionTreeClassifier 
+
+dt_model = DecisionTreeClassifier( 
+    criterion='gini', 
+    max_depth=5, 
+    min_samples_split=100, 
+    min_samples_leaf=50, 
+    max_features=15, 
+    random_state=42 
+) 
+dt_model.fit(X_train, y_train) 
+
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report 
+y_pred = dt_model.predict(X_test) 
+
+print("Accuracy:", accuracy_score(y_test, y_pred)) 
+print(confusion_matrix(y_test, y_pred)) 
+print(classification_report(y_test, y_pred)) 
+
+import matplotlib.pyplot as plt 
+from sklearn.tree import plot_tree  
+plt.figure(figsize=(25, 15)) 
+
+plot_tree( 
+    dt_model, 
+    feature_names=X.columns, 
+    class_names=['Rejected', 'Approved'],  # adjust if labels differ 
+    filled=True, 
+    rounded=True, 
+    fontsize=8 
+) 
+
+plt.title("Decision Tree for Loan Approval Prediction") 
+plt.show() 
